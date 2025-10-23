@@ -1,0 +1,67 @@
+model:
+  target: models.semanticLaWa.SemanticLaWa
+  params:
+    scale_factor: 0.18215 # 1.0
+    extraction_resize: False
+    start_attack_acc_thresh: 0.75
+    watermark_addition_weight: 0.1
+    learning_rate: 0.00008
+    epoch_num: 200
+    dis_update_freq: 0
+    rotation_seed: 42
+    use_lightweight_wemb: True  # Use lightweight U-Net for faster inference
+    cosine_similarity_threshold: 0.85
+    
+    first_stage_config:
+      target: stable-diffusion.ldm.models.autoencoder.AutoencoderKL
+      params:
+        ckpt_path: weights/first_stage_models/first_stage_KL-f8.ckpt
+        embed_dim: 4
+        monitor: val/rec_loss
+        ddconfig:
+          double_z: true
+          z_channels: 4
+          resolution: 256
+          in_channels: 3
+          out_ch: 3
+          ch: 128
+          ch_mult:
+          - 1
+          - 2
+          - 4
+          - 4
+          num_res_blocks: 2
+          attn_resolutions: []
+          dropout: 0.0
+        lossconfig:
+          target: torch.nn.Identity
+    
+    semantic_encoder_config:
+      target: models.semanticEmbedding.SemanticEncoder
+      params:
+        model_name: openai/clip-vit-base-patch32
+        rotation_seed: 42
+        embedding_dim: 512  # Fallback dimension if CLIP not available
+
+    decoder_config:
+      target: models.semanticDecoder.SemanticDecoder
+      params: 
+        semantic_dim: 512
+ 
+    discriminator_config:
+      target: models.modifiedAEDecoder.Discriminator1
+  
+    # loss config:
+    recon_type: rgb
+    recon_loss_weight: 0.1
+    adversarial_loss_weight: 1.0
+    perceptual_loss_weight: 1.0
+    semantic_loss_weight: 2.0
+    
+    noise_config:
+      target: models.transformations.TransformNet
+      params:
+        ramp: 10000
+        apply_many_crops: False 
+        apply_required_attacks: True
+        required_attack_list: ['rotation', 'resize','random_crop', 'center_crop', 'blur', 'noise','contrast','brightness', 'jpeg']
