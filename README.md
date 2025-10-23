@@ -1,32 +1,38 @@
 # 2025_YXH
 
-## Semantic Watermarking for Text-to-Image Generation
+## 语义水印 - 基于文本提示的内容相关水印 / Semantic Watermarking for Text-to-Image
 
 This repository implements semantic watermarking for LaWa (Latent Watermarking), enabling **content-related watermarks** where each generated image has a unique watermark derived from its text prompt.
 
-### 🚀 Quick Start
+### 🚀 开始使用 / Quick Start
 
-**Want to train the model?** Start here:
-1. **[QUICK_REFERENCE.md](QUICK_REFERENCE.md)** - Visual diagrams & command reference
-2. **[TRAINING_GUIDE.md](TRAINING_GUIDE.md)** - Complete training workflow explanation  
-3. **[examples/README_TRAINING.md](examples/README_TRAINING.md)** - Training examples & demos
+**新用户从这里开始 / New users start here:**
 
-**Want to understand the architecture?**
-- **[SEMANTIC_WATERMARKING.md](SEMANTIC_WATERMARKING.md)** - Full technical documentation
-- **[IMPLEMENTATION_SUMMARY.md](IMPLEMENTATION_SUMMARY.md)** - Implementation details
+👉 **[开始使用.md (5分钟快速上手)](开始使用.md)** - 最快的入门方式 / Fastest way to get started
 
-**Migrating from binary LaWa?**
-- **[MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)** - Step-by-step migration guide
+或者选择你的路径 / Or choose your path:
 
-### 📖 Documentation Overview
+1. **想直接开始训练?** → [开始使用.md](开始使用.md)
+2. **想理解完整工作流程?** → [训练指南_中文.md](训练指南_中文.md) 或 [TRAINING_GUIDE.md](TRAINING_GUIDE.md)
+3. **想看可视化流程图?** → [QUICK_REFERENCE.md](QUICK_REFERENCE.md)
+4. **从二进制LaWa迁移?** → [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md)
 
+### 📖 完整文档 / Complete Documentation
+
+#### 中文文档 / Chinese Docs
+| 文档 | 用途 | 时长 |
+|------|------|------|
+| [开始使用.md](开始使用.md) | 5分钟快速上手 | ⚡ 快速 |
+| [训练指南_中文.md](训练指南_中文.md) | 完整训练工作流程 | 📚 详细 |
+
+#### English Docs
 | Document | Purpose | Length |
 |----------|---------|--------|
-| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Visual diagrams, commands, troubleshooting | Quick scan |
-| [TRAINING_GUIDE.md](TRAINING_GUIDE.md) | Complete training workflow & strategies | Comprehensive |
-| [examples/README_TRAINING.md](examples/README_TRAINING.md) | Training examples & demos | Tutorial |
-| [SEMANTIC_WATERMARKING.md](SEMANTIC_WATERMARKING.md) | Architecture & technical details | Reference |
-| [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) | Binary → Semantic migration | For upgrades |
+| [TRAINING_GUIDE.md](TRAINING_GUIDE.md) | Complete training workflow | Comprehensive |
+| [QUICK_REFERENCE.md](QUICK_REFERENCE.md) | Visual diagrams, commands | Quick scan |
+| [examples/README_TRAINING.md](examples/README_TRAINING.md) | Training examples | Tutorial |
+| [SEMANTIC_WATERMARKING.md](SEMANTIC_WATERMARKING.md) | Architecture & tech | Reference |
+| [MIGRATION_GUIDE.md](MIGRATION_GUIDE.md) | Binary → Semantic | For upgrades |
 
 ### 🎯 Key Features
 
