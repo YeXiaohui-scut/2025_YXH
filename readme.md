@@ -1,5 +1,6 @@
 # LaWa: Using Latent Space for In-Generation Image Watermarking
-This repo contains the implementation of the paper 'LaWa: Using Latent Space for In-Generation Image Watermarking', published at ECCV2024.
+
+This repo contains the implementation of the paper 'LaWa: Using Latent Space for In-Generation Image Watermarking', published at ECCV2024, **plus a major upgrade to Semantic Watermarking**.
 
 Link to arXiv paper: https://arxiv.org/abs/2408.05868
 
@@ -9,7 +10,38 @@ Link to Huawei's AI Gallery Notebook: https://developer.huaweicloud.com/develop/
 <center>
 <img src="https://vbdai-notebooks.obs.cn-north-4.myhuaweicloud.com/lawa/framework.png" alt="alt text" width="1000">
 </center>
-</p> 
+</p>
+
+## 🆕 Semantic Watermarking Upgrade
+
+We've upgraded LaWa from binary watermarks to **semantic watermarks** based on LatentSeal, SWIFT, and MetaSeal approaches. Key improvements:
+
+- **Semantic Vectors**: Embed high-dimensional semantic vectors (512 dims) instead of 48-bit binary codes
+- **Cryptographic Security**: Rotation matrix encryption for enhanced security
+- **Rich Metadata**: Embed model version, user ID, timestamps, and more
+- **Prompt Integration**: Watermark is semantically bound to the text prompt
+- **U-Net Based Embedding**: Content-adaptive perturbation generation
+
+**📖 [Read the full documentation](SEMANTIC_WATERMARKING.md)**
+
+### Quick Start with Semantic Watermarking
+
+```bash
+# Run demo
+python examples/semantic_watermarking_demo.py
+
+# Run inference with semantic watermarking
+python inference_semantic.py \
+    --config_sd stable-diffusion/configs/stable-diffusion/v1-inference.yaml \
+    --ckpt_sd weights/stable-diffusion-v1/model.ckpt \
+    --config_lawa configs/SD14_SemanticLaWa_inference.yaml \
+    --prompt "A photo of an astronaut riding a horse on the moon" \
+    --add_metadata \
+    --model_version "v1.0" \
+    --outdir results/semantic_watermarking
+```
+
+--- 
 
 ## Install Required Packages
 
@@ -55,6 +87,31 @@ You can train your modified decoder using:
 ```
 
 Batch size 8 fits on a 32GB GPU.
+
+## Versions Comparison
+
+| Feature | Original LaWa | Semantic LaWa (New) |
+|---------|--------------|---------------------|
+| Watermark Type | 48-bit binary | 512-dim semantic vector |
+| Information Capacity | 48 bits | ~2048 bits equivalent |
+| Security | Moderate | High (cryptographic) |
+| Semantic Binding | None | Strong (prompt-based) |
+| Metadata Support | Limited | Rich (model, user, timestamp) |
+| Embedding Method | Linear layers | U-Net perturbation generator |
+| Verification | Bit accuracy | Cosine similarity |
+
+### When to Use Each Version
+
+**Original LaWa**: 
+- Simple binary watermark needs
+- Well-established training pipeline
+- Lower computational requirements
+
+**Semantic LaWa**:
+- Need cryptographic security
+- Want to embed rich metadata
+- Require prompt-based verification
+- Need stronger forgery resistance
 
 ## 📚 Citation
 If you find LaWa useful in your research or applications, please consider giving us a star &#127775; and citing it by the following BibTeX entry.
