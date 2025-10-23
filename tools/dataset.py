@@ -101,6 +101,153 @@ class dataset(torch.utils.data.Dataset):
     def __len__(self) -> int:
         return self.N 
 
+
+class datasetWithPrompts(torch.utils.data.Dataset):
+    """
+    Dataset that includes text prompts for semantic watermarking.
+    Supports multiple prompt strategies:
+    1. Load from caption file (if available)
+    2. Generate from prompt pool (for training without captions)
+    3. Generate content-based descriptions (simple heuristics)
+    """
+    def __init__(self, data_dir, data_list, resize=256, transform=None, 
+                 caption_file=None, prompt_pool_size=100, **kwargs):
+        super().__init__()
+        if resize != 'all':
+            if transform is None:
+                self.transform = [transforms.RandomResizedCrop((resize, resize), scale=(0.8, 1.0), ratio=(0.75, 1.33))]
+            else:
+                self.transform = transform 
+        else:
+            self.transform = [transforms.RandomResizedCrop(256, scale=(0.8, 1.0), ratio=(0.75, 1.33)),
+                               transforms.RandomResizedCrop(512, scale=(0.8, 1.0), ratio=(0.75, 1.33))]
+        
+        self.data_dir = data_dir
+        self.data_list = pd.read_csv(data_list)['path'].tolist()
+        self.N = len(self.data_list)
+        self.kwargs = kwargs
+        
+        # Load captions if available
+        self.captions = None
+        if caption_file is not None and os.path.exists(caption_file):
+            caption_df = pd.read_csv(caption_file)
+            # Assume caption file has 'path' and 'caption' columns
+            if 'caption' in caption_df.columns:
+                self.captions = dict(zip(caption_df['path'], caption_df['caption']))
+                print(f"Loaded {len(self.captions)} captions from {caption_file}")
+        
+        # Generate prompt pool for training without captions
+        self.prompt_pool = self._generate_prompt_pool(prompt_pool_size)
+    
+    def _generate_prompt_pool(self, size):
+        """
+        Generate a diverse pool of prompts for training.
+        These will be randomly assigned to images during training.
+        """
+        # Generic prompts that could apply to many images
+        prompt_templates = [
+            "A photo", "An image", "A picture", "A photograph",
+            "A colorful image", "A detailed photo", "A scenic view", 
+            "A beautiful picture", "A natural scene", "An outdoor scene",
+            "An indoor scene", "A landscape", "A portrait", "A close-up photo",
+            "A wide angle photo", "A captured moment", "A snapshot",
+            "An artistic photo", "A creative image", "A visual composition",
+        ]
+        
+        # Additional context that can be combined
+        contexts = [
+            "", "with natural lighting", "with vivid colors", "with soft tones",
+            "in daylight", "at sunset", "with high contrast", "with fine details",
+            "captured professionally", "taken outdoors", "taken indoors",
+            "showing textures", "with depth", "well-composed", "sharp and clear"
+        ]
+        
+        # Generate combinations
+        prompts = []
+        for _ in range(size):
+            template = random.choice(prompt_templates)
+            context = random.choice(contexts)
+            if context:
+                prompt = f"{template} {context}"
+            else:
+                prompt = template
+            prompts.append(prompt)
+        
+        return prompts
+    
+    def _get_prompt_for_image(self, path):
+        """
+        Get or generate a prompt for the given image path.
+        Priority: 1) Real caption, 2) Random from pool, 3) Generic
+        """
+        # Try to get real caption
+        if self.captions is not None and path in self.captions:
+            return self.captions[path]
+        
+        # Otherwise, randomly select from prompt pool
+        # Use hash of path to ensure consistency within epoch
+        idx = hash(path) % len(self.prompt_pool)
+        return self.prompt_pool[idx]
+    
+    def __getitem__(self, index):
+        path = self.data_list[index]
+        img = Image.open(os.path.join(self.data_dir, path))
+        img = img.convert('RGB')
+        transform = random.choice(self.transform)
+        img = transform(img)
+        img = np.array(img, dtype=np.float32)/127.5-1.  # [-1, 1]
+        
+        # Get prompt for this image
+        prompt = self._get_prompt_for_image(path)
+        
+        return {'image': img, 'prompt': prompt}
+    
+    def __len__(self) -> int:
+        return self.N
+
+
+class DataModuleWithPrompts(pl.LightningDataModule):
+    """
+    DataModule for semantic watermarking with text prompts.
+    """
+    def __init__(self, train, validation, batch_size=8, num_workers=None, use_worker_init_fn=False):
+        super().__init__()
+        self.batch_size = batch_size
+        self.num_workers = num_workers if num_workers is not None else batch_size * 2
+        self.use_worker_init_fn = use_worker_init_fn
+        if self.use_worker_init_fn:
+            self.init_fn = worker_init_fn
+        else:
+            self.init_fn = None
+        
+        self.train_config = train
+        self.validation_config = validation
+
+    def setup(self, stage=None):
+        self.dataset_train = instantiate_from_config(self.train_config)
+        self.dataset_validation = instantiate_from_config(self.validation_config)
+
+    def train_dataloader(self):
+        return DataLoader(self.dataset_train, batch_size=self.batch_size,
+                          num_workers=self.num_workers, shuffle=True,
+                          worker_init_fn=self.init_fn, drop_last=True)
+
+    def val_dataloader(self):
+        return DataLoader(self.dataset_validation, batch_size=self.batch_size,
+                          num_workers=self.num_workers, shuffle=True,
+                          worker_init_fn=self.init_fn, drop_last=True)
+
+    def test_dataloader(self):
+        return DataLoader(self.dataset_validation, batch_size=self.batch_size,
+                          num_workers=self.num_workers, shuffle=True,
+                          worker_init_fn=self.init_fn, drop_last=True)
+
+    def predict_dataloader(self):
+        return DataLoader(self.dataset_validation, batch_size=self.batch_size,
+                          num_workers=self.num_workers, shuffle=True,
+                          worker_init_fn=self.init_fn, drop_last=True)
+
+
 # class WrappedDataset(Dataset):
 #     """Wraps an arbitrary object with __len__ and __getitem__ into a pytorch dataset"""
 

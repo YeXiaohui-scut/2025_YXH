@@ -68,23 +68,27 @@ model:
         required_attack_list: ['rotation', 'resize','random_crop', 'center_crop', 'blur', 'noise','contrast','brightness', 'jpeg']
     
 data:
-  target: tools.dataset.DataModuleWithPrompts  # Modified to include prompts
+  target: tools.dataset.DataModuleWithPrompts  # DataModule with text prompt support
   params:
     batch_size: 8
     num_workers: 8
     use_worker_init_fn: true
     train:
-      target: tools.dataset.datasetWithPrompts  # Modified to include prompts
+      target: tools.dataset.datasetWithPrompts  # Dataset with text prompts
       params:
         data_dir: /data/mirflickr1m/images
         data_list: data/train_100k.csv 
         resize: 256
+        # Optional: caption_file: data/train_captions.csv  # Uncomment to use real captions
+        prompt_pool_size: 100  # Number of generic prompts to generate (if no caption file)
     validation:
-      target: tools.dataset.datasetWithPrompts  # Modified to include prompts
+      target: tools.dataset.datasetWithPrompts  # Dataset with text prompts
       params:
         data_dir: /data/mirflickr1m/images 
         data_list: data/val_10k.csv 
         resize: 256
+        # Optional: caption_file: data/val_captions.csv  # Uncomment to use real captions
+        prompt_pool_size: 100
 
 lightning:
   callbacks:
