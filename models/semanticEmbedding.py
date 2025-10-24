@@ -6,7 +6,14 @@ Based on LatentSeal and MetaSeal approaches
 import torch
 import torch.nn as nn
 import numpy as np
-from transformers import CLIPTextModel, CLIPTokenizer
+
+# Try to import transformers, use fallback if not available
+try:
+    from transformers import CLIPTextModel, CLIPTokenizer
+    HAS_TRANSFORMERS = True
+except ImportError:
+    HAS_TRANSFORMERS = False
+    print("Warning: transformers not installed. Using fallback encoding mode.")
 
 
 class RotationMatrix:
@@ -104,24 +111,26 @@ class SemanticEncoder(nn.Module):
         self.text_encoder = None
         
         # Try to load CLIP text encoder
-        try:
-            self.tokenizer = CLIPTokenizer.from_pretrained(model_name)
-            self.text_encoder = CLIPTextModel.from_pretrained(model_name)
-            self.text_encoder.eval()
-            
-            # Freeze text encoder parameters
-            for param in self.text_encoder.parameters():
-                param.requires_grad = False
-            
-            # Get embedding dimension
-            self.embedding_dim = self.text_encoder.config.hidden_size
-            print(f"Loaded CLIP model with embedding dim: {self.embedding_dim}")
-        except Exception as e:
-            print(f"Warning: Could not load CLIP model: {e}")
-            print(f"Using random projection as fallback with embedding_dim={embedding_dim}")
-            # Use a simple random projection as fallback
-            self.text_encoder = None
-            self.tokenizer = None
+        if HAS_TRANSFORMERS:
+            try:
+                self.tokenizer = CLIPTokenizer.from_pretrained(model_name)
+                self.text_encoder = CLIPTextModel.from_pretrained(model_name)
+                self.text_encoder.eval()
+                
+                # Freeze text encoder parameters
+                for param in self.text_encoder.parameters():
+                    param.requires_grad = False
+                
+                # Get embedding dimension
+                self.embedding_dim = self.text_encoder.config.hidden_size
+                print(f"Loaded CLIP model with embedding dim: {self.embedding_dim}")
+            except Exception as e:
+                print(f"Warning: Could not load CLIP model: {e}")
+                print(f"Using hash-based fallback with embedding_dim={embedding_dim}")
+                self.text_encoder = None
+                self.tokenizer = None
+        else:
+            print(f"Using hash-based fallback with embedding_dim={embedding_dim}")
         
         # Initialize rotation matrix for encryption
         self.rotation_matrix = RotationMatrix(dim=self.embedding_dim, seed=rotation_seed)
