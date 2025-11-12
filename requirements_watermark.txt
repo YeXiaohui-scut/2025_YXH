@@ -1,0 +1,37 @@
+# Requirements for Hybrid Watermarking Framework
+# Combining MetaSeal, SWIFT, and GenPTW approaches
+
+# Core ML libraries (may already be available)
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.24.0
+pillow>=9.0.0
+
+# Computer Vision
+opencv-python>=4.8.0
+
+# QR Code generation and reading (MetaSeal)
+qrcode>=7.4.2
+pyzbar>=0.1.9
+
+# Cryptography for ECDSA signing (MetaSeal)
+cryptography>=41.0.0
+
+# Transformers for BLIP model (SWIFT)
+transformers>=4.30.0
+accelerate>=0.21.0
+
+# Perceptual loss (for training)
+lpips>=0.1.4
+
+# JPEG compression simulation
+jpeg2dct>=0.1.0
+# Alternative: use kornia which has JPEG layer
+
+# Image quality metrics
+scikit-image>=0.19.0
+scipy>=1.9.0
+
+# Utilities
+tqdm>=4.65.0
+pyyaml>=6.0
