@@ -67,3 +67,8 @@ weights/**/*.pth
 tmp/
 temp/
 *.tmp
+
+# Cryptographic keys (watermarking framework)
+keys/
+*.pem
+*.key
