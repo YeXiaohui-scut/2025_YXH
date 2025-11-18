@@ -64,7 +64,7 @@ class PixelNoiseEncoder(nn.Module):
         for block in self.upsample_blocks:
             x = block(x)
         
-        # ��影到单通道
+        # 投影到单通道
         w_noise = self.final_conv(x)  # [B, 1, 256, 256]
         
         return w_noise
@@ -185,6 +185,8 @@ class Stage1Model(nn.Module):
         return self.decoder(w_noise)
 
 
+# ============ 损失函数 ============
+
 class Stage1Loss(nn.Module):
     """
     Stage I 损失函数
@@ -219,3 +221,23 @@ class Stage1Loss(nn.Module):
             'bits': loss_bits,
             'noise': loss_noise
         }
+
+
+# ============ 测试代码 ============
+
+if __name__ == "__main__":
+    # 测试编码器
+    encoder = PixelNoiseEncoder(num_bits=48, noise_size=256)
+    w_bits = torch.randn(4, 48).sigmoid()  # [B, 48]
+    w_noise = encoder(w_bits)
+    print(f"Encoder output shape: {w_noise.shape}")  # [4, 1, 256, 256]
+    
+    # 测试解码器
+    decoder = PixelNoiseDecoder(num_bits=48, noise_size=256)
+    w_bits_pred = decoder(w_noise)
+    print(f"Decoder output shape: {w_bits_pred.shape}")  # [4, 48]
+    
+    # 测试不同尺寸输入（模拟裁剪）
+    w_noise_cropped = w_noise[:, :, :128, :128]  # 裁剪到1/4
+    w_bits_pred_cropped = decoder(w_noise_cropped)
+    print(f"Decoder with cropped input: {w_bits_pred_cropped.shape}")  # [4, 48]
