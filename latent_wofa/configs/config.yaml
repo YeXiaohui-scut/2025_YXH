@@ -1,0 +1,141 @@
+# Latent-WOFA Configuration File
+
+# ============ 数据集配置 ============
+data:
+  train_dataset: "COCO2017"  # 或 "LAION-Aesthetics"
+  train_data_path: "./data/coco/train2017"
+  val_data_path: "./data/coco/val2017"
+  image_size: 512
+  batch_size: 16
+  num_workers: 4
+
+# ============ 水印配置 ============
+watermark:
+  num_bits: 48  # 水印比特数
+  noise_size: 256  # 像素噪声图尺寸 (256x256)
+  
+# ============ Stage I 配置 ============
+stage1:
+  # 网络架构
+  encoder_channels: [64, 128, 256, 512]
+  decoder_channels: [512, 256, 128, 64]
+  
+  # 训练参数
+  epochs: 100
+  learning_rate: 0.0001
+  weight_decay: 0.00001
+  
+  # 损失权重
+  loss_bits_weight: 1.0
+  loss_noise_weight: 0.1
+  
+  # 失真层配置（渐进式）
+  distortion:
+    # 初始阶段（温和攻击）
+    initial:
+      crop_ratio_min: 0.5  # 保留50%区域
+      crop_ratio_max: 0.8
+      rotation_degrees: 5
+      gaussian_noise_std: 0.01
+    
+    # 中期阶段
+    medium:
+      crop_ratio_min: 0.2
+      crop_ratio_max: 0.5
+      rotation_degrees: 20
+      gaussian_noise_std: 0.05
+    
+    # 最终阶段（极端攻击）
+    final:
+      crop_ratio_min: 0.01  # 只保留1%区域
+      crop_ratio_max: 0.1
+      rotation_degrees: 45
+      gaussian_noise_std: 0.1
+      
+  # 渐进式策略
+  progressive:
+    start_epoch: 0  # 从温和攻击开始
+    medium_epoch: 30  # 30 epoch后进入中期
+    final_epoch: 60  # 60 epoch后进入最终阶段
+
+# ============ Stage II 配置 ============
+stage2:
+  # VAE配置（使用SD预训练）
+  vae_model: "stabilityai/sd-vae-ft-mse"
+  latent_channels: 4
+  latent_size: 64  # 对于512x512图像
+  
+  # 网络架构
+  embedder_hidden_dims: [256, 512, 512]
+  extractor_backbone: "resnet50"  # 或 "efficientnet_b3"
+  
+  # 训练参数
+  epochs: 150
+  learning_rate: 0.00005
+  weight_decay: 0.00001
+  
+  # 损失权重
+  loss_image_weight: 1.0     # 不可见性
+  loss_noise_weight: 0.5     # 噪声重建
+  loss_bits_weight: 2.0      # 比特准确性
+  loss_perceptual_weight: 0.3  # 感知损失
+  
+  # 失真层配置（像素空间攻击）
+  distortion:
+    # 局部盗窃攻击
+    crop_and_fuse:
+      crop_ratio_min: 0.01
+      crop_ratio_max: 0.3
+      rotation_degrees: 45
+      scale_range: [0.5, 2.0]
+      translation_ratio: 0.5
+    
+    # 生成式攻击
+    generative_attacks:
+      enable_img2img: true
+      img2img_strength: 0.3  # 重绘强度
+      enable_style_transfer: true
+      enable_inpainting: true
+    
+    # 社交媒体攻击
+    social_media:
+      jpeg_quality_range: [30, 90]
+      screenshot_moire: true
+      resize_range: [0.5, 1.5]
+  
+  # 渐进式策略
+  progressive:
+    start_epoch: 0
+    medium_epoch: 50
+    final_epoch: 100
+
+# ============ 评估配置 ============
+evaluation:
+  metrics:
+    - "bit_accuracy"
+    - "psnr"
+    - "ssim"
+    - "lpips"
+    - "fid"
+    - "clip_score"
+  
+  attack_scenarios:
+    - name: "crop_1_percent"
+      crop_ratio: 0.01
+    - name: "crop_5_percent"
+      crop_ratio: 0.05
+    - name: "crop_10_percent"
+      crop_ratio: 0.10
+    - name: "rotation_45"
+      rotation: 45
+    - name: "combined_attack"
+      crop_ratio: 0.05
+      rotation: 30
+      jpeg_quality: 50
+
+# ============ 推理配置 ============
+inference:
+  stable_diffusion_model: "runwayml/stable-diffusion-v1-5"
+  num_inference_steps: 50
+  guidance_scale: 7.5
+  watermark_strength: 0.1  # 水印嵌入强度
