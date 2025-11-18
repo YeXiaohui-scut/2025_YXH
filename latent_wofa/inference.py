@@ -1,20 +1,22 @@
-# Inference Pipeline
+from my_model_library import WatermarkedStableDiffusionPipeline
 
-# Import necessary modules
-import torch
-from models import Stage2Model  # Assuming your model is defined in models
+def load_models():
+    # Load pre-trained models
+    model = WatermarkedStableDiffusionPipeline()
+    return model
 
-# Load the model
-model = Stage2Model().to('cuda')  # Assuming using GPU
-model.load_state_dict(torch.load('path_to_weights.pth'))  # Load your weights
-model.eval()
-
-# Inference function
-def inference(input_data):
+def generate_images(model, inputs):
     with torch.no_grad():
-        output = model(input_data.to('cuda'))  # Assuming input_data is a tensor
-        return output
+        watermarked_images = model.generate(inputs)
+    return watermarked_images
 
-# Example usage
-# input_tensor = some_transform(input_image)  # Add your preprocessing here
-# result = inference(input_tensor)
+def extract_watermarks(model, images):
+    with torch.no_grad():
+        extracted_watermarks = model.extract_watermarks(images)
+    return extracted_watermarks
+
+if __name__ == '__main__':
+    model = load_models()
+    # Assume 'input_images' is pre-loaded
+    watermarked_images = generate_images(model, input_images)
+    extracted_watermarks = extract_watermarks(model, watermarked_images)

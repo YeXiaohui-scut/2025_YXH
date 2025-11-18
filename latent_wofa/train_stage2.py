@@ -1,39 +1,33 @@
-# Complete Training Script for Stage II
-
-# Import necessary modules
 import torch
-import torchvision.transforms as transforms
-from torch.utils.data import DataLoader
-from datasets import MyDataset  # Assuming `MyDataset` is your dataset class
-from models import Stage2Model  # Assuming your model is defined in models
+from torchvision import datasets, transforms
+from my_model_library import VAE, DistortionLayer
 
-# Training settings
-epochs = 150
-batch_size = 16
-learning_rate = 0.00005
+class Stage2Trainer:
+    def __init__(self, model, optimizer, criterion, dataloader):
+        self.model = model
+        self.optimizer = optimizer
+        self.criterion = criterion
+        self.dataloader = dataloader
 
-# Data preparation
-train_dataset = MyDataset(train=True)
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+    def train(self, epochs):
+        for epoch in range(epochs):
+            for data in self.dataloader:
+                inputs, targets = data
+                self.optimizer.zero_grad()
+                outputs = self.model(inputs)
+                loss = self.criterion(outputs, targets)
+                loss.backward()
+                self.optimizer.step()
+                print(f'Epoch {epoch}, Loss: {loss.item()}')
 
-# Model, loss function, optimizer
-model = Stage2Model().to('cuda')  # Assuming using GPU
-criterion = torch.nn.MSELoss()  # Replace with your loss function
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-# Training loop
-for epoch in range(epochs):
-    for batch in train_loader:
-        inputs, labels = batch
-        inputs, labels = inputs.to('cuda'), labels.to('cuda')
-
-        # Forward pass
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
-
-        # Backward pass and optimization
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
-
-    print(f'Epoch [{epoch+1}/{epochs}], Loss: {loss.item():.4f}')
+if __name__ == '__main__':
+    transform = transforms.Compose([transforms.ToTensor()])
+    dataset = datasets.CocoDetection(root='path/to/coco', transform=transform)
+    dataloader = torch.utils.data.DataLoader(dataset, batch_size=32, shuffle=True)
+    
+    model = VAE()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    criterion = torch.nn.MSELoss()
+    
+    trainer = Stage2Trainer(model, optimizer, criterion, dataloader)
+    trainer.train(epochs=10)

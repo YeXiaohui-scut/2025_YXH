@@ -1,31 +1,20 @@
-# Evaluation Script
+from my_model_library import EvaluationMetrics
 
-# Import necessary modules
-import torch
-from models import Stage2Model  # Assuming your model is defined in models
-from metrics import WatermarkMetrics  # Assuming your metrics are defined in metrics
-
-# Load the model
-model = Stage2Model().to('cuda')  # Assuming using GPU
-model.load_state_dict(torch.load('path_to_weights.pth'))  # Load your weights
-model.eval()
-
-# Evaluation function
-def evaluate(test_loader):
-    metrics = WatermarkMetrics()
-    results = []
-
-    for batch in test_loader:
-        inputs, labels = batch
-        inputs, labels = inputs.to('cuda'), labels.to('cuda')
-
-        with torch.no_grad():
-            outputs = model(inputs)
-            result = metrics.evaluate_all(labels, outputs)  # Assuming labels and outputs are your original and watermarked images
-            results.append(result)
-
+def evaluate_attacks(model, images):
+    results = {}
+    
+    # Various attack scenarios
+    attacks = ['crop', 'rotate', 'jpeg']
+    for attack in attacks:
+        modified_images = apply_attack(images, attack)
+        metrics = EvaluationMetrics()
+        score = metrics.calculate(modified_images)
+        results[attack] = score
+    
     return results
 
-# Example usage
-# test_loader = DataLoader(test_dataset, batch_size=16)
-# evaluation_results = evaluate(test_loader)
+if __name__ == '__main__':
+    # Assume 'original_images' is pre-loaded
+    scores = evaluate_attacks(model, original_images)
+    for attack, score in scores.items():
+        print(f'{attack} score: {score}')

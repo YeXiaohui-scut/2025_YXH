@@ -1,0 +1,1 @@
+Complete Stable Diffusion integration pipeline with watermark embedding and extraction capabilities. Includes WatermarkedStableDiffusionPipeline class that integrates with diffusers library, supports VAE encoding/decoding, watermark embedding in latent space, and extraction from generated images.
